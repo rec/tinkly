@@ -15,6 +15,11 @@ class EndpointProperties(griffe.Extension):
         attr: griffe.Attribute,
         **kwargs: object,
     ) -> None:
+        """Add property labels, response types, and HTTP behavior to factory calls.
+
+        Only assignments on tinkly.client.TwinklyClient are processed. Preserve
+        any endpoint-specific attribute docstring after the generated details.
+        """
         if attr.parent is None or attr.parent.path != 'tinkly.client.TwinklyClient':
             return
         if not isinstance(node, ast.Assign) or not isinstance(

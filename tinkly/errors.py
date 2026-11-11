@@ -6,7 +6,7 @@ class TinklyError(Exception):
 
 
 class DiscoveryError(TinklyError):
-    """Discovery datagram could not be sent or parsed."""
+    """A discovery reply has an invalid packet structure or status."""
 
 
 class ProtocolError(TinklyError):
@@ -17,6 +17,7 @@ class UnsupportedEndpointError(ProtocolError):
     """The device does not support a Twinkly endpoint."""
 
     def __init__(self, path: str, text: str) -> None:
+        """Retain the API-relative endpoint and decoded HTTP 404 response body."""
         self.path = path
         self.text = text
         super().__init__(f'Twinkly endpoint {path!r} is not supported: {text}')

@@ -17,11 +17,22 @@ DEFAULT_BROADCAST = '255.255.255.255'
 
 @dataclass(frozen=True)
 class DiscoveredDevice:
+    """Address and identifier advertised by a Twinkly discovery reply."""
+
     ip_address: str
+    """Device IPv4 address decoded from the discovery packet."""
     device_id: str
+    """Device identifier decoded from the NUL-terminated reply text."""
 
 
 def parse_discovery_response(data: bytes) -> DiscoveredDevice:
+    """Decode one discovery reply containing an IPv4 address and device ID.
+
+    Raises:
+        DiscoveryError: The packet is too short, lacks OK status, or lacks its
+            terminating NUL byte.
+        UnicodeDecodeError: The device identifier is not valid UTF-8.
+    """
     if len(data) < 7:
         raise DiscoveryError(f'Discovery response is too short: {len(data)} bytes')
     if data[4:6] != b'OK':
@@ -39,6 +50,19 @@ def discover(
     grouping: float = 0.1,
     destination: str = DEFAULT_BROADCAST,
 ) -> Iterator[DiscoveredDevice]:
+    """Broadcast a discovery request and yield each responding IPv4 address once.
+
+    Args:
+        timeout: Seconds to wait for the first valid device response.
+        grouping: Seconds to collect further responses after the first valid
+            response. Later replies do not extend this window.
+        destination: IPv4 broadcast address or a specific device address.
+
+    Devices are yielded as replies arrive. Exhausting the iterator waits until
+    its deadline; an empty scan waits for timeout. Socket timeouts and the
+    echoed request are ignored. Other socket errors and malformed reply errors
+    propagate. Duplicate devices are identified by their advertised IP address.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP) as sock:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.bind(('', 0))
