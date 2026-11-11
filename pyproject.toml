@@ -19,7 +19,15 @@ quote-style = "single"
 pythonpath = ["."]
 
 [dependency-groups]
-dev = ["griffelib>=2", "reccy", "tyro"]
+dev = [
+    "griffelib>=2",
+    "pytest>=9.2.0",
+    "pyupgrade>=3.22.0",
+    "reccy",
+    "ruff>=0.17.3",
+    "ty>=0.0.97",
+    "tyro",
+]
 
 [tool.uv.sources]
 reccy = { git = "ssh://git@github.com/rec/reccy.git", branch = "main" }
