@@ -6,7 +6,7 @@ import base64
 import json
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from http import client
 
 from .authentication import make_challenge_response
@@ -93,7 +93,7 @@ class TwinklyClient:
     """Optional MAC address used to check the login challenge response."""
     timeout: float = 5.0
     """HTTP connection and socket operation timeout in seconds."""
-    token: AuthToken | None = None
+    token: AuthToken | None = field(default=None, init=False)
     """Current authentication token, obtained automatically when needed."""
 
     # Getters

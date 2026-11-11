@@ -55,14 +55,13 @@ class ClientTests(unittest.TestCase):
     def test_delete_sends_authenticated_delete_request(self) -> None:
         FakeHttpConnection.response = FakeHttpResponse(200, b'{"code":1000}')
         FakeHttpConnection.requests = []
+        client = TwinklyClient(host='192.168.1.23')
+        client.token = AuthToken(
+            value='test-token', challenge_response='', expires_at=None
+        )
 
         with patch('tinkly.client.client.HTTPConnection', FakeHttpConnection):
-            response = TwinklyClient(
-                host='192.168.1.23',
-                token=AuthToken(
-                    value='test-token', challenge_response='', expires_at=None
-                ),
-            ).delete('movies')
+            response = client.delete('movies')
 
         self.assertEqual(response.data, {'code': 1000})
         self.assertEqual(

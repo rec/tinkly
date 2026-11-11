@@ -40,7 +40,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn('GET status', status.docstring.value)
         self.assertEqual(
             [p.name for p in client.parameters],
-            ['self', 'host', 'mac', 'timeout', 'token'],
+            ['self', 'host', 'mac', 'timeout'],
         )
         self.assertNotIn('property', client['host'].labels)
         self.assertIsInstance(client['authenticate'], griffe.Function)
