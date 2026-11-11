@@ -2,7 +2,7 @@
 
 Low-level Python communication with Twinkly lights. Pydantic is the only
 third-party runtime dependency. The package does not depend on lyte or NumPy.
-Python 3.13 or newer is required.
+Python 3.12 or newer is required.
 
 This directory is a standalone Python project. Install it from its project directory:
 
