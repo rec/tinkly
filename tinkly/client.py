@@ -16,6 +16,20 @@ AUTH_HEADER = 'X-Auth-Token'
 TWINKLY_API_PREFIX = '/' + 'x' + 'led/v1'
 
 
+def getter(path: str, authenticated: bool = True) -> property:
+    def read(self: TwinklyClient) -> TwinklyResponse:
+        return self.get(path, authenticated=authenticated)
+
+    return property(read)
+
+
+def setter(path: str) -> property:
+    def write(self: TwinklyClient, body: dict[str, object]) -> None:
+        self.post(path, body)
+
+    return getter(path).setter(write)
+
+
 @dataclass(frozen=True)
 class TwinklyResponse:
     http_status: int
@@ -39,6 +53,36 @@ class TwinklyClient:
     mac: str | None = None
     timeout: float = 5.0
     token: AuthToken | None = None
+
+    # Getters
+    current_movie = getter('led/movies/current')
+    current_music_driver_set = getter('music/drivers/sets/current')
+    current_playlist_entry = getter('playlist/current')
+    device_name = getter('device_name')
+    effects = getter('led/effects')
+    firmware_version = getter('fw/version', authenticated=False)
+    mic_config = getter('mic/config')
+    mic_sample = getter('mic/sample')
+    movie_config = getter('led/movie/config')
+    movies = getter('movies')
+    mqtt_config = getter('mqtt/config')
+    music_driver_sets = getter('music/drivers/sets')
+    music_drivers = getter('music/drivers')
+    network_scan_results = getter('network/scan_results')
+    network_status = getter('network/status')
+    playlist = getter('playlist')
+    status = getter('status', authenticated=False)
+    summary = getter('summary')
+
+    # Setters
+    brightness = setter('led/out/brightness')
+    current_effect = setter('led/effects/current')
+    layout_full = setter('led/layout/full')
+    led_color = setter('led/color')
+    led_config = setter('led/config')
+    led_mode = setter('led/mode')
+    saturation = setter('led/out/saturation')
+    timer = setter('timer')
 
     def authenticate(self) -> AuthToken:
         challenge = os.urandom(32)
@@ -109,116 +153,14 @@ class TwinklyClient:
     def delete(self, path: str) -> TwinklyResponse:
         return self.request('DELETE', path)
 
-    def get_firmware_version(self) -> TwinklyResponse:
-        return self.get('fw/version', authenticated=False)
-
-    def get_status(self) -> TwinklyResponse:
-        return self.get('status', authenticated=False)
-
-    def get_device_name(self) -> TwinklyResponse:
-        return self.get('device_name')
-
-    def get_summary(self) -> TwinklyResponse:
-        return self.get('summary')
-
     def echo(self, body: dict[str, object]) -> TwinklyResponse:
         return self.post('echo', body)
-
-    def get_brightness(self) -> TwinklyResponse:
-        return self.get('led/out/brightness')
-
-    def set_brightness(self, body: dict[str, object]) -> TwinklyResponse:
-        return self.post('led/out/brightness', body)
-
-    def get_saturation(self) -> TwinklyResponse:
-        return self.get('led/out/saturation')
-
-    def set_saturation(self, body: dict[str, object]) -> TwinklyResponse:
-        return self.post('led/out/saturation', body)
-
-    def get_led_mode(self) -> TwinklyResponse:
-        return self.get('led/mode')
-
-    def set_led_mode(self, body: dict[str, object]) -> TwinklyResponse:
-        return self.post('led/mode', body)
-
-    def get_led_color(self) -> TwinklyResponse:
-        return self.get('led/color')
-
-    def set_led_color(self, body: dict[str, object]) -> TwinklyResponse:
-        return self.post('led/color', body)
-
-    def get_effects(self) -> TwinklyResponse:
-        return self.get('led/effects')
-
-    def get_current_effect(self) -> TwinklyResponse:
-        return self.get('led/effects/current')
-
-    def set_current_effect(self, body: dict[str, object]) -> TwinklyResponse:
-        return self.post('led/effects/current', body)
-
-    def get_layout_full(self) -> TwinklyResponse:
-        return self.get('led/layout/full')
-
-    def set_layout_full(self, body: dict[str, object]) -> TwinklyResponse:
-        return self.post('led/layout/full', body)
 
     def delete_layout_full(self) -> TwinklyResponse:
         return self.delete('led/layout/full')
 
-    def get_led_config(self) -> TwinklyResponse:
-        return self.get('led/config')
-
-    def set_led_config(self, body: dict[str, object]) -> TwinklyResponse:
-        return self.post('led/config', body)
-
-    def get_timer(self) -> TwinklyResponse:
-        return self.get('timer')
-
-    def set_timer(self, body: dict[str, object]) -> TwinklyResponse:
-        return self.post('timer', body)
-
-    def get_movie_config(self) -> TwinklyResponse:
-        return self.get('led/movie/config')
-
-    def get_movies(self) -> TwinklyResponse:
-        return self.get('movies')
-
-    def get_current_movie(self) -> TwinklyResponse:
-        return self.get('led/movies/current')
-
-    def get_playlist(self) -> TwinklyResponse:
-        return self.get('playlist')
-
-    def get_current_playlist_entry(self) -> TwinklyResponse:
-        return self.get('playlist/current')
-
     def get_network_scan(self) -> TwinklyResponse:
         return self.get('network/scan')
-
-    def get_network_scan_results(self) -> TwinklyResponse:
-        return self.get('network/scan_results')
-
-    def get_network_status(self) -> TwinklyResponse:
-        return self.get('network/status')
-
-    def get_mqtt_config(self) -> TwinklyResponse:
-        return self.get('mqtt/config')
-
-    def get_mic_config(self) -> TwinklyResponse:
-        return self.get('mic/config')
-
-    def get_mic_sample(self) -> TwinklyResponse:
-        return self.get('mic/sample')
-
-    def get_music_drivers(self) -> TwinklyResponse:
-        return self.get('music/drivers')
-
-    def get_music_driver_sets(self) -> TwinklyResponse:
-        return self.get('music/drivers/sets')
-
-    def get_current_music_driver_set(self) -> TwinklyResponse:
-        return self.get('music/drivers/sets/current')
 
     def set_realtime_mode(self) -> TwinklyResponse:
         return self.post('led/mode', {'mode': 'rt'})

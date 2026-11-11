@@ -42,9 +42,17 @@ transmissions, `send_frame` accepts a caller-owned UDP socket as `output`.
 UDP sending uses `socket.sendto` on macOS, Linux, and Windows.
 
 `TwinklyClient` exposes typed response records containing the HTTP status and
-decoded JSON object. It provides named endpoint methods as well as `get`, `post`,
-`post_bytes`, `delete`, and `request` for direct endpoint access. Protocol
-exceptions are defined in `tinkly.errors`, under `TinklyError`.
+decoded JSON object. Endpoint properties such as `client.firmware_version` and
+`client.brightness` perform a fresh HTTP GET on every read and return a
+`TwinklyResponse`. Writable properties accept a JSON body, for example
+`client.brightness = {'mode': 'enabled', 'type': 'A', 'value': 75}`. Assignment
+performs an HTTP POST and propagates errors, but does not return the response.
+Use `post` when the response is needed.
+
+Authentication, echo, layout deletion, network scanning, and switching to realtime
+or off mode remain methods. The generic `get`, `post`, `post_bytes`, `delete`,
+and `request` methods provide direct endpoint access. Protocol exceptions are
+defined in `tinkly.errors`, under `TinklyError`.
 
 ## Frame buffers
 
