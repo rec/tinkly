@@ -10,6 +10,8 @@ from collections.abc import Buffer, Iterable
 from .errors import ProtocolError
 
 REALTIME_PORT = 7777
+# Twinkly UDP v3 limits each fragment's pixel payload to 900 bytes, excluding headers.
+# https://xled-docs.readthedocs.io/en/latest/protocol_details.html#version-3
 MAX_FRAGMENT_SIZE = 900
 
 
