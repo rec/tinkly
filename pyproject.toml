@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tinkly"
-version = "0.2.0"
+version = "0.2.1"
 description = "Low-level Twinkly discovery, authentication, HTTP, and realtime UDP transport"
 readme = "README.md"
 authors = [{ name = "Tom Ritchford", email = "tom@swirly.com" }]
