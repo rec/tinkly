@@ -81,9 +81,14 @@ class AuthToken:
 class TwinklyClient:
     """Synchronous HTTP client for a single Twinkly device.
 
-    Endpoint properties return TwinklyResponse records on every read. Writable
-    properties POST assigned JSON dictionaries. Authentication is automatic
-    for protected endpoints. Each request opens and closes an HTTP connection;
+    Each endpoint property read sends a fresh GET request and returns a
+    TwinklyResponse containing http_status and data. Properties marked writable
+    accept a dict[str, object] JSON body and POST assignments; assignment discards
+    the response, so use post() when it is needed. Other properties are read-only.
+    Authentication is required and obtained automatically unless stated otherwise.
+    Request errors propagate to the caller.
+
+    Each request opens and closes an HTTP connection;
     retries, realtime frame pacing, and reconnection belong to the caller.
     Serialize all use of a client; instances are not thread-safe.
     """

@@ -28,15 +28,31 @@ class DocumentationTests(unittest.TestCase):
         self.assertIsNone(brightness.value)
         self.assertIn('GET led/out/brightness', brightness.docstring.value)
         self.assertIn('POST led/out/brightness', brightness.docstring.value)
-        self.assertIn('dict[str, object]', brightness.docstring.value)
-        self.assertIn('Authentication is required', brightness.docstring.value)
+        self.assertIn('dict[str, object]', client.docstring.value)
+        self.assertIn('Authentication is required', client.docstring.value)
+        self.assertIn('Request errors propagate', client.docstring.value)
+        self.assertIn('read-only', client.docstring.value)
+        self.assertIn('http_status and data', client.docstring.value)
+        self.assertIn('output brightness', brightness.docstring.value)
+        for attribute in client.attributes.values():
+            if 'property' in attribute.labels:
+                with self.subTest(property=attribute.name):
+                    self.assertNotIn('Each read sends', attribute.docstring.value)
+                    self.assertNotIn(
+                        'Authentication is required', attribute.docstring.value
+                    )
+                    self.assertNotIn(
+                        'This property is read-only', attribute.docstring.value
+                    )
+                    self.assertNotIn(
+                        'Request errors propagate', attribute.docstring.value
+                    )
         for attribute in (firmware, status):
             with self.subTest(property=attribute.name):
                 self.assertEqual(attribute.labels, {'property'})
                 self.assertIn(
                     'Authentication is not required', attribute.docstring.value
                 )
-                self.assertIn('read-only', attribute.docstring.value)
         self.assertIn('GET fw/version', firmware.docstring.value)
         self.assertIn('GET status', status.docstring.value)
         self.assertEqual(

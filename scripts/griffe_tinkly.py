@@ -37,7 +37,7 @@ class EndpointProperties(griffe.Extension):
         """Add property labels, response types, and HTTP behavior to factory calls.
 
         Only assignments on tinkly.client.TwinklyClient are processed. Preserve
-        any endpoint-specific attribute docstring after the generated details.
+        endpoint-specific descriptions; shared behavior belongs on the class.
         """
         if attr.parent is None or attr.parent.path != 'tinkly.client.TwinklyClient':
             return
@@ -61,22 +61,14 @@ class EndpointProperties(griffe.Extension):
             True,
         )
         writable = call.func.id == 'setter'
-        description = (
-            f'HTTP endpoint `GET {path}`.\n\n'
-            'Each read sends a fresh request and returns a '
-            '`tinkly.client.TwinklyResponse` containing `http_status` and `data`.\n\n'
-            f'Authentication is {"required" if authenticated else "not required"}.'
-        )
+        description = f'`GET {path}`'
         if writable:
-            description += (
-                f'\n\nAssign a `dict[str, object]` JSON body to send `POST {path}`. '
-                'Assignment does not return the response; use `post()` when needed.'
-            )
-        else:
-            description += '\n\nThis property is read-only.'
-        description += '\n\nRequest errors propagate to the caller.'
+            description += f', `POST {path}`'
+        description += '.'
+        if not authenticated:
+            description += ' Authentication is not required.'
         if attr.docstring is not None:
-            description += f'\n\n{attr.docstring.value}'
+            description = f'{attr.docstring.value}\n\n{description}'
 
         attr.labels.difference_update({'class-attribute', 'instance-attribute'})
         attr.labels.add('property')
