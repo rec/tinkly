@@ -6,9 +6,8 @@ import base64
 import json
 import os
 import time
+from dataclasses import dataclass
 from http import client
-
-from pydantic import BaseModel
 
 from .authentication import make_challenge_response
 from .errors import AuthenticationError, ProtocolError, UnsupportedEndpointError
@@ -17,12 +16,14 @@ AUTH_HEADER = 'X-Auth-Token'
 TWINKLY_API_PREFIX = '/' + 'x' + 'led/v1'
 
 
-class TwinklyResponse(BaseModel, frozen=True):
+@dataclass(frozen=True, kw_only=True)
+class TwinklyResponse:
     http_status: int
     data: dict[str, object]
 
 
-class AuthToken(BaseModel, frozen=True):
+@dataclass(frozen=True, kw_only=True)
+class AuthToken:
     value: str
     challenge_response: str
     expires_at: float | None
@@ -32,7 +33,8 @@ class AuthToken(BaseModel, frozen=True):
         return self.expires_at is not None and self.expires_at <= time.time()
 
 
-class TwinklyClient(BaseModel):
+@dataclass(kw_only=True)
+class TwinklyClient:
     host: str
     mac: str | None = None
     timeout: float = 5.0

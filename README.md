@@ -1,7 +1,7 @@
 # tinkly
 
-Low-level Python communication with Twinkly lights. Pydantic is the only
-third-party runtime dependency. The package does not depend on lyte or NumPy.
+Low-level Python communication with Twinkly lights, using only the standard
+library. The package does not depend on lyte or NumPy.
 Python 3.12 or newer is required.
 
 This directory is a standalone Python project. Install it from its project directory:
@@ -61,7 +61,7 @@ Arrays without a compatible host buffer must be converted by the caller.
 
 ## Tests
 
-The tests use only the standard library and Pydantic. After installing the package,
+The tests use only the standard library. After installing the package,
 run them from this directory:
 
 ```sh
