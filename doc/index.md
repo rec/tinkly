@@ -42,11 +42,11 @@ byte buffers, including NumPy arrays, without requiring NumPy as a dependency.
 
 ## Building this documentation
 
-The documentation tools are development dependencies and require Python 3.13 or
+The documentation tools are development dependencies and require Python 3.12 or
 newer. From the repository root:
 
 ```sh
-uv sync --python 3.13
+uv sync --python 3.12
 uv run python scripts/build_docs.py
 ```
 

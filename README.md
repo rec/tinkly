@@ -86,10 +86,10 @@ Documentation uses reccy's shared build and a Griffe extension that describes
 the generated endpoint properties. These tools are dev dependencies only;
 tinkly's runtime remains dependency-free and supports Python 3.12.
 
-Build locally with Python 3.13 or newer:
+Build locally with Python 3.12 or newer:
 
 ```sh
-uv sync --python 3.13
+uv sync --python 3.12
 uv run python scripts/build_docs.py
 ```
 
