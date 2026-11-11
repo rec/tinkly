@@ -145,6 +145,12 @@ protocol error, without catching errors from unrelated frame processing.
 
 ## 8. [P2] The page checker accepts links that fail when opened from disk
 
+**Status: Resolved.** The checker now lives in
+[reccy](https://github.com/rec/reccy/blob/main/reccy/documentation_pages.py).
+With `use_directory_urls = false`, it rejects directory and root-relative page
+links even when the target exists in the generated site. Regression tests cover
+both forms. Directory URLs remain valid for sites configured to use them.
+
 **Source:** [check_docs.py](../scripts/check_docs.py#L26-L40), local browsing
 promise in [contributing.md](../doc/contributing.md#L13-L16).
 
@@ -163,6 +169,10 @@ mode, including rejecting or correcting directory and root-relative page links.
 existing site page referenced by a root-relative URL.
 
 ## 9. [P2] Invisible script or style text makes a blank page pass
+
+**Status: Resolved.** Reccy's checker excludes script and style text from article
+content. Regression tests reject heading-only pages containing either element.
+This does not evaluate arbitrary CSS or JavaScript visibility.
 
 **Source:** [check_docs.py](../scripts/check_docs.py#L55-L74).
 

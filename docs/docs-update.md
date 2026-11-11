@@ -20,8 +20,8 @@ Directory links are accepted only when directory URLs are configured. Heading-on
 package indexes can link to child pages without artificial descriptions.
 
 This addresses the checker defects recorded in findings 8 and 9 of
-[`plan/issues.md`](../plan/issues.md). Validation follows hosted-site semantics;
-it does not promise that root-relative links work through `file://`. It does not
+[`plan/issues.md`](../plan/issues.md). With directory URLs off, root-relative page
+links are also rejected because they fail under `file://`. The checker does not
 check fragment targets, external URLs, assets, or CSS/JavaScript visibility, and
 does not replace browser inspection.
 
