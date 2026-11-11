@@ -7,7 +7,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-11-04T19:28:34.106769Z"
+exclude-newer = "2026-11-04T19:29:17.139037Z"
 exclude-newer-span = "P1W"
 
 [[package]]
@@ -327,7 +327,7 @@ wheels = [
 
 [[package]]
 name = "tinkly"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 
 [package.dev-dependencies]
