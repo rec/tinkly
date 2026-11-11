@@ -10,7 +10,8 @@ requires-python = ">=3.13"
 dependencies = ["pydantic"]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["tinkly*"]
 
 [tool.ruff.format]
 quote-style = "single"
