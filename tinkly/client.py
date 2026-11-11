@@ -16,13 +16,13 @@ AUTH_HEADER = 'X-Auth-Token'
 TWINKLY_API_PREFIX = '/' + 'x' + 'led/v1'
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class TwinklyResponse:
     http_status: int
     data: dict[str, object]
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class AuthToken:
     value: str
     challenge_response: str
@@ -33,7 +33,7 @@ class AuthToken:
         return self.expires_at is not None and self.expires_at <= time.time()
 
 
-@dataclass(kw_only=True)
+@dataclass
 class TwinklyClient:
     host: str
     mac: str | None = None
