@@ -8,6 +8,23 @@ from tinkly.errors import DiscoveryError
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_consumer_delay_can_end_scan_before_queued_replies_are_read(self) -> None:
+        now = 0.0
+        with (
+            patch('tinkly.discovery.socket.socket') as create_socket,
+            patch('tinkly.discovery.time.monotonic', side_effect=lambda: now),
+        ):
+            sock = create_socket.return_value.__enter__.return_value
+            sock.recvfrom.side_effect = [
+                (b'\x01\x01\xa8\xc0OKFirst\x00', ('192.168.1.1', 5555)),
+                (b'\x02\x01\xa8\xc0OKSecond\x00', ('192.168.1.2', 5555)),
+            ]
+            devices = discover()
+            self.assertEqual(next(devices).device_id, 'First')
+            now = 0.2
+            self.assertEqual(list(devices), [])
+            self.assertEqual(sock.recvfrom.call_count, 1)
+
     def test_parse_discovery_response(self) -> None:
         device = parse_discovery_response(b'\xab\x01\xa8\xc0OKTwinkly_A1234B\x00')
 

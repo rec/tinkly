@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import binascii
 import socket
 from collections.abc import Buffer, Iterable
 
@@ -34,7 +33,7 @@ def frame_packets(
     """
     try:
         raw_token = base64.b64decode(token, validate=True)
-    except binascii.Error as err:
+    except ValueError as err:
         raise ProtocolError('Twinkly realtime token is not valid base64') from err
     if len(raw_token) != 8:
         raise ProtocolError('Twinkly realtime token must decode to 8 bytes')
@@ -64,6 +63,8 @@ def send_frame(
     function sends the fragments once without pacing, retries, or token renewal.
     The byte count includes packet headers. Buffer validation, protocol, and
     socket errors propagate; earlier fragments may already have been sent.
+    Callers must serialize complete frame sends to each controller, even when
+    using separate sockets, so fragments from different frames cannot interleave.
     """
     if output is not None:
         return _send_frame(output, host, token, frame)

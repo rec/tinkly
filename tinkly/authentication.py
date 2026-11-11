@@ -18,10 +18,7 @@ def mac_bytes(mac: str) -> bytes:
     compact = re.sub(r'[^0-9a-fA-F]', '', mac)
     if len(compact) != 12:
         raise ValueError(f'MAC address must contain 12 hex digits: {mac!r}')
-    try:
-        return bytes.fromhex(compact)
-    except ValueError as err:
-        raise ValueError(f'MAC address contains non-hex characters: {mac!r}') from err
+    return bytes.fromhex(compact)
 
 
 def xor_repeating(message: bytes, key: bytes) -> bytes:

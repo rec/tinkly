@@ -377,7 +377,7 @@ class ClientTests(unittest.TestCase):
             _ = client.current_movie
             _ = client.playlist
             _ = client.current_playlist_entry
-            client.get_network_scan()
+            client.start_network_scan()
             _ = client.network_scan_results
             _ = client.network_status
             _ = client.mqtt_config

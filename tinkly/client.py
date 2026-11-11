@@ -13,7 +13,7 @@ from .authentication import make_challenge_response
 from .errors import AuthenticationError, ProtocolError, UnsupportedEndpointError
 
 AUTH_HEADER = 'X-Auth-Token'
-TWINKLY_API_PREFIX = '/' + 'x' + 'led/v1'
+TWINKLY_API_PREFIX = '/xled/v1'
 
 
 def getter(path: str, authenticated: bool = True) -> property:
@@ -64,9 +64,9 @@ class TwinklyResponse:
 class AuthToken:
     """Authentication token, verification response, and optional expiry time."""
 
-    value: str
+    value: str = field(repr=False)
     """Base64 token used in HTTP headers and decoded for realtime UDP packets."""
-    challenge_response: str
+    challenge_response: str = field(repr=False)
     """Challenge response returned by login and sent back during verification."""
     expires_at: float | None
     """Expiry as Unix time in seconds, or None if the device supplied no expiry."""
@@ -85,6 +85,7 @@ class TwinklyClient:
     properties POST assigned JSON dictionaries. Authentication is automatic
     for protected endpoints. Each request opens and closes an HTTP connection;
     retries, realtime frame pacing, and reconnection belong to the caller.
+    Serialize all use of a client; instances are not thread-safe.
     """
 
     host: str
@@ -124,7 +125,7 @@ class TwinklyClient:
     music_drivers = getter('music/drivers')
     """Read the music drivers available on the device."""
     network_scan_results = getter('network/scan_results')
-    """Read Wi-Fi scan results after starting a scan with get_network_scan()."""
+    """Read Wi-Fi scan results after starting a scan with start_network_scan()."""
     network_status = getter('network/status')
     """Read the device's current network status."""
     playlist = getter('playlist')
@@ -156,8 +157,10 @@ class TwinklyClient:
         """Log in with a random challenge, verify the issued token, and return it.
 
         Store the token on this client and calculate its expiry when supplied
-        by the device. If mac is set, check the returned challenge response
-        before verification. Authentication and request failures propagate.
+        by the device. Cache only a successfully verified, unexpired token.
+        If mac is set, check the returned challenge response before verification.
+        Invalid or non-positive expiry raises AuthenticationError; authentication
+        and request failures propagate without retrying verification.
         """
         challenge = os.urandom(32)
         login = self.post(
@@ -179,24 +182,42 @@ class TwinklyClient:
         expires_in = data.get('authentication_token_expires_in')
         expires_at = None
         if expires_in is not None:
-            if not isinstance(expires_in, int | str):
+            if isinstance(expires_in, bool) or not isinstance(expires_in, int | str):
                 raise AuthenticationError(
                     'Login response did not contain numeric '
                     "'authentication_token_expires_in'"
                 )
-            expires_at = time.time() + int(expires_in)
+            try:
+                seconds = int(expires_in)
+            except ValueError as err:
+                raise AuthenticationError(
+                    "Login response has invalid 'authentication_token_expires_in'"
+                ) from err
+            if seconds <= 0:
+                raise AuthenticationError(
+                    "Login response requires positive 'authentication_token_expires_in'"
+                )
+            expires_at = time.time() + seconds
 
-        self.token = AuthToken(
+        candidate = AuthToken(
             value=token,
             challenge_response=challenge_response,
             expires_at=expires_at,
         )
-        self.post(
+        self._request(
+            'POST',
             'verify',
             {'challenge_response': challenge_response},
-            authenticated=True,
+            None,
+            'application/json',
+            candidate.value,
         )
-        return self.token
+        if candidate.expired:
+            raise AuthenticationError(
+                "Login 'authentication_token_expires_in' elapsed during verification"
+            )
+        self.token = candidate
+        return candidate
 
     def get(self, path: str, authenticated: bool = True) -> TwinklyResponse:
         """GET an API-relative endpoint, optionally obtaining and sending a token."""
@@ -246,7 +267,7 @@ class TwinklyClient:
         """Delete the device's full LED layout and return its response."""
         return self.delete('led/layout/full')
 
-    def get_network_scan(self) -> TwinklyResponse:
+    def start_network_scan(self) -> TwinklyResponse:
         """Start a Wi-Fi network scan and return the device's acknowledgement.
 
         Read network_scan_results separately once the scan has completed.
@@ -290,15 +311,28 @@ class TwinklyClient:
             AuthenticationError: Authentication fails or HTTP 401 is returned.
                 HTTP 401 also clears the stored token.
             UnsupportedEndpointError: The device returns HTTP 404.
-            ProtocolError: Sending or reading raises OSError, another HTTP
-                error is returned, the body is not a valid UTF-8 JSON object,
-                or a supplied application code is not 1000.
+            ProtocolError: Sending or reading raises OSError or HTTPException,
+                another HTTP error is returned, the body is not a valid UTF-8
+                JSON object, or a supplied application code is not 1000.
         """
         if body is not None and payload is not None:
             raise ValueError('request cannot use both JSON body and binary payload')
+        token = self._auth_token() if authenticated else None
+        return self._request(method, path, body, payload, content_type, token)
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        body: dict[str, object] | None,
+        payload: bytes | None,
+        content_type: str,
+        token: str | None,
+    ) -> TwinklyResponse:
+        """Send and validate a request using an explicit token without renewal."""
         headers = {'Content-Type': content_type}
-        if authenticated:
-            headers[AUTH_HEADER] = self._auth_token()
+        if token is not None:
+            headers[AUTH_HEADER] = token
         if body is not None:
             payload = json.dumps(body).encode()
         if payload is not None:
@@ -314,9 +348,9 @@ class TwinklyClient:
             )
             response = connection.getresponse()
             raw = response.read()
-        except OSError as err:
+        except (OSError, client.HTTPException) as err:
             raise ProtocolError(
-                f'Could not reach Twinkly device at {self.host}: {err}'
+                f'HTTP {method} {path!r} failed for Twinkly device at {self.host}'
             ) from err
         finally:
             connection.close()
@@ -328,19 +362,24 @@ class TwinklyClient:
             text = raw.decode(errors='replace')
             raise UnsupportedEndpointError(path, text)
         if response.status < 200 or response.status >= 300:
-            text = raw.decode(errors='replace')
-            raise ProtocolError(f'HTTP {response.status} from {self.host}: {text}')
+            raise ProtocolError(
+                f'HTTP {response.status} for {method} {path!r} from {self.host}'
+            )
 
         try:
             data = json.loads(raw.decode() or '{}')
         except (json.JSONDecodeError, UnicodeDecodeError) as err:
-            raise ProtocolError(f'Device returned invalid JSON: {raw!r}') from err
+            raise ProtocolError(
+                f'Device returned invalid JSON for {method} {path!r}'
+            ) from err
         if not isinstance(data, dict):
-            raise ProtocolError(f'Device returned a non-object JSON response: {data!r}')
+            raise ProtocolError(
+                f'Device returned a non-object JSON response for {method} {path!r}'
+            )
 
         code = data.get('code')
         if code is not None and code != 1000:
-            raise ProtocolError(f'Twinkly application code {code}: {data!r}')
+            raise ProtocolError(f'Twinkly application failure for {method} {path!r}')
         return TwinklyResponse(http_status=response.status, data=data)
 
     def _auth_token(self) -> str:

@@ -17,10 +17,10 @@ class UnsupportedEndpointError(ProtocolError):
     """The device does not support a Twinkly endpoint."""
 
     def __init__(self, path: str, text: str) -> None:
-        """Retain the API-relative endpoint and decoded HTTP 404 response body."""
+        """Retain endpoint and 404 body; omit the body from the error message."""
         self.path = path
         self.text = text
-        super().__init__(f'Twinkly endpoint {path!r} is not supported: {text}')
+        super().__init__(f'Twinkly endpoint {path!r} is not supported (HTTP 404)')
 
 
 class AuthenticationError(TinklyError):

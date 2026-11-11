@@ -2,9 +2,9 @@
 
 Static review of `8fbed89`, performed on 2026-11-11. Reviewed the package,
 documentation helpers, tests, README, guides, and packaging configuration.
-Only this report was added. No application, tests, device communication, or
-documentation build was run. Examples below describe code paths to cover in
-future tests; they are not claims of executed reproductions. Python 3.12's
+The original review was static; the resolutions below record subsequent fixes
+and regression coverage. No physical device validation was performed. Historical
+source references describe the reviewed code, before the fixes. Python 3.12's
 installed standard-library source was also checked for HTTP exception inheritance
 and Base64 decoding behavior.
 
@@ -14,6 +14,11 @@ or maintenance issue. Finding 10 is conditional on concurrent use and is
 separated from defects that also occur with a single caller.
 
 ## 1. [P1] Failed verification leaves an unverified token cached
+
+**Status: Resolved.** `authenticate()` keeps the candidate local until verification
+succeeds. The failed-verification and successful-verification tests in
+[test_client_authentication.py](../tests/test_client_authentication.py) check cache
+visibility and a fresh login on the next protected request after failure.
 
 **Source:** [client.py](../tinkly/client.py#L189-L199), token selection at
 [client.py](../tinkly/client.py#L346-L352).
@@ -34,6 +39,12 @@ client tests do not exercise the login/verify sequence.
 
 ## 2. [P1] An already-expired login token recursively starts authentication
 
+**Status: Resolved.** Verification uses the explicit candidate through the shared
+private transport, bypassing renewal. Non-positive expiry is rejected, and expiry
+during verification raises `AuthenticationError` without caching or retrying.
+Expiry tests in [test_client_authentication.py](../tests/test_client_authentication.py)
+cover these paths and bound the number of HTTP requests.
+
 **Source:** [client.py](../tinkly/client.py#L179-L198),
 [_auth_token](../tinkly/client.py#L346-L352).
 
@@ -52,6 +63,11 @@ reported instead of recursively logging in.
 candidate expiring between login and verification.
 
 ## 3. [P2] HTTP framing failures escape the protocol error boundary
+
+**Status: Resolved.** The transport translates `OSError` and `HTTPException` into
+`ProtocolError`, preserving causes and closing connections. The HTTP failure test
+in [test_client_authentication.py](../tests/test_client_authentication.py) covers
+send failures, `BadStatusLine`, and `IncompleteRead`.
 
 **Source:** [client.py](../tinkly/client.py#L307-L322), documented errors at
 [client.py](../tinkly/client.py#L288-L295).
@@ -72,6 +88,11 @@ broad `except Exception` handler.
 
 ## 4. [P2] A malformed expiry string raises an unrelated ValueError
 
+**Status: Resolved.** Invalid integer strings, booleans, unsupported types, and
+non-positive expiry raise `AuthenticationError` naming the expiry field. Positive
+integer strings and omitted expiry remain supported. Covered by expiry and
+successful-login tests in [test_client_authentication.py](../tests/test_client_authentication.py).
+
 **Source:** [client.py](../tinkly/client.py#L179-L187).
 
 The response check accepts every string as numeric, but `int(expires_in)` is
@@ -88,6 +109,12 @@ path.
 **Coverage needed:** A non-numeric expiry string and boolean expiry values.
 
 ## 5. [P2] Routine representations and error messages expose tokens
+
+**Status: Resolved.** Token and challenge-response fields are excluded from repr.
+Protocol error messages omit response bodies and untrusted application-code values;
+404 errors retain their explicit `.text` attribute without printing it. Credential
+tests in [test_client_authentication.py](../tests/test_client_authentication.py)
+cover representations and malformed, non-object, application, and HTTP errors.
 
 **Source:** [AuthToken and TwinklyClient](../tinkly/client.py#L63-L97),
 [response errors](../tinkly/client.py#L324-L343).
@@ -109,6 +136,12 @@ appear in client/token representations or malformed-login exception messages.
 
 ## 6. [P2] Slow discovery consumers lose replies already queued in time
 
+**Status: Resolved by defining the iterator contract.** Discovery remains lazy;
+its docstring requires prompt consumption, normally `list(discover())`, for a
+complete scan. Consumer work counts toward the fixed deadline. The consumer-delay
+test in [test_discovery.py](../tests/test_discovery.py) demonstrates that queued
+replies are left unread when the consumer resumes after the deadline.
+
 **Source:** [discovery.py](../tinkly/discovery.py#L71-L86), iterator contract at
 [discovery.py](../tinkly/discovery.py#L53-L64).
 
@@ -128,6 +161,10 @@ The chosen fixed post-response window itself is not being challenged here.
 past the deadline by the consumer between `next()` calls.
 
 ## 7. [P2] Non-ASCII tokens bypass frame token error handling
+
+**Status: Resolved.** The Base64 conversion catches `ValueError`, including its
+`binascii.Error` subclass, only around token decoding. The bad-token test in
+[test_frame.py](../tests/test_frame.py) covers ASCII and non-ASCII failures.
 
 **Source:** [frame.py](../tinkly/frame.py#L35-L40), error contract at
 [frame.py](../tinkly/frame.py#L30-L32).
@@ -190,6 +227,11 @@ CSS or JavaScript will leave that text visible in a browser.
 
 ## 10. [P2, conditional] Shared-client and shared-controller ownership is unclear
 
+**Status: Resolved by defining caller ownership.** The client docstring requires
+serialized use; `send_frame()` requires serialization of whole frames per
+controller even across separate sockets. Concurrent use is not supported, so no
+locks, concurrent API, or interleaving tests are introduced.
+
 **Source:** [client.py](../tinkly/client.py#L189-L199),
 [401 handling](../tinkly/client.py#L299-L325),
 [frame.py](../tinkly/frame.py#L74-L79).
@@ -217,6 +259,10 @@ token refresh with a stale 401, and of two multi-fragment frame transmissions.
 
 ## 11. [P3] get_network_scan sounds like a read but starts an operation
 
+**Status: Resolved.** `start_network_scan()` is the sole operation name. Its
+property documentation, [test_client.py](../tests/test_client.py), and lyte's
+networking/diagnostic callers and diagnostic test doubles use the new name.
+
 **Source:** [client.py](../tinkly/client.py#L249-L255).
 
 The implementation and docstring start a scan; reading the results is a separate
@@ -227,6 +273,10 @@ distinction used elsewhere in the API.
 name, updating callers and documentation together if the rename is approved.
 
 ## 12. [P3] MAC parsing contains an unreachable error branch
+
+**Status: Resolved.** The unreachable handler is removed. Permissive separator
+filtering and length validation remain unchanged, covered by the existing MAC
+parsing tests in [test_authentication.py](../tests/test_authentication.py).
 
 **Source:** [authentication.py](../tinkly/authentication.py#L18-L24).
 
@@ -240,6 +290,10 @@ If stricter address syntax is desired, define it separately rather than relying
 on this unreachable branch. Common colon/hyphen formats are already tested.
 
 ## 13. [P3] The API prefix is unnecessarily assembled from three literals
+
+**Status: Resolved.** The prefix is the single literal `'/xled/v1'`. Request-path
+assertions in [test_client.py](../tests/test_client.py) and the handshake tests
+exercise its use in HTTP requests.
 
 **Source:** [client.py](../tinkly/client.py#L16).
 
@@ -260,4 +314,4 @@ not a protocol behavior change.
 - Lazy frame validation, shared pixel buffers, and partial UDP transmission on
   failure are already documented; they were not counted as new defects.
 - No device behavior, network performance, or thread interleaving was measured.
-  Proposed fixes and tests require separate implementation work.
+  Automated coverage uses controlled HTTP/socket responses and clocks.

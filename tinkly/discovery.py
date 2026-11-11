@@ -62,6 +62,9 @@ def discover(
     its deadline; an empty scan waits for timeout. Socket timeouts and the
     echoed request are ignored. Other socket errors and malformed reply errors
     propagate. Duplicate devices are identified by their advertised IP address.
+    Consume promptly, normally with list(discover()), to collect the full scan.
+    Time spent by the consumer between results counts toward the deadline and
+    can leave timely replies unread in the socket when the iterator resumes.
     """
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP) as sock:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)

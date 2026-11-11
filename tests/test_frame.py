@@ -104,5 +104,6 @@ class RealtimeFrameTests(unittest.TestCase):
         self.assertTrue(all(a == ('192.168.1.23', 7777) for _, a in datagrams))
 
     def test_rejects_bad_realtime_token(self) -> None:
-        with self.assertRaises(ProtocolError):
-            list(frame_packets('bad', b'\x00\x00\x00'))
+        for token in ('bad', 'é'):
+            with self.subTest(token=token), self.assertRaises(ProtocolError):
+                list(frame_packets(token, b'\x00\x00\x00'))
