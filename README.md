@@ -69,8 +69,9 @@ Arrays without a compatible host buffer must be converted by the caller.
 
 ## Tests
 
-The tests use only the standard library. After installing the package,
-run them from this directory:
+The protocol tests use only the standard library. The documentation extension
+test also requires the dev dependencies described below. From the dev environment,
+run the tests from this directory:
 
 ```sh
 python -m unittest discover -s tests
@@ -78,3 +79,19 @@ python -m unittest discover -s tests
 
 They use fake HTTP connections and sockets and do not contact lights. Playback,
 animation, CLI commands, diagnostics, and retry policy remain in lyte.
+
+## Documentation
+
+Documentation uses reccy's shared build and a Griffe extension that describes
+the generated endpoint properties. These tools are dev dependencies only;
+tinkly's runtime remains dependency-free and supports Python 3.12.
+
+Build locally with Python 3.13 or newer:
+
+```sh
+uv sync --python 3.13
+uv run python scripts/build_docs.py
+```
+
+The result is `.cache/reccy-docs/site/index.html`. See `doc/index.md` for the
+documentation guide. Runtime-only installations can use `uv sync --no-dev`.

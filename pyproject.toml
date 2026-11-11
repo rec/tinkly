@@ -23,3 +23,6 @@ dev = { requires-python = ">=3.13" }
 
 [tool.uv.sources]
 reccy = { git = "ssh://git@github.com/rec/reccy.git", branch = "main" }
+
+[tool.reccy.documentation]
+extensions = ["scripts/griffe_tinkly.py"]
