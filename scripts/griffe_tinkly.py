@@ -8,6 +8,25 @@ import griffe
 class EndpointProperties(griffe.Extension):
     """Recognize getter and setter declarations on TwinklyClient."""
 
+    def on_module_instance(self, *, mod: griffe.Module, **kwargs: object) -> None:
+        """Give the generated package index a useful overview of its modules."""
+        if mod.path == 'tinkly':
+            mod.docstring = griffe.Docstring(
+                'Twinkly protocol API.\n\n'
+                'Import the symbols you need from these modules:\n\n'
+                '- [HTTP client and settings][tinkly.client]: TwinklyClient, '
+                'endpoint properties, authentication tokens, and HTTP responses.\n'
+                '- [Device discovery][tinkly.discovery]: find controllers on '
+                'the local network.\n'
+                '- [RGB frame transmission][tinkly.frame]: validate pixel '
+                'buffers and send realtime UDP frames.\n'
+                '- [Errors][tinkly.errors]: exceptions raised by protocol '
+                'operations.\n'
+                '- [Authentication helpers][tinkly.authentication]: MAC address '
+                'decoding and challenge-response calculations.',
+                parent=mod,
+            )
+
     def on_attribute_instance(
         self,
         *,

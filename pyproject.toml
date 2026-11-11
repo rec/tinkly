@@ -15,6 +15,9 @@ include = ["tinkly*"]
 [tool.ruff.format]
 quote-style = "single"
 
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
 [dependency-groups]
 dev = ["griffelib>=2", "reccy", "tyro"]
 
@@ -23,3 +26,4 @@ reccy = { git = "ssh://git@github.com/rec/reccy.git", branch = "main" }
 
 [tool.reccy.documentation]
 extensions = ["scripts/griffe_tinkly.py"]
+use_directory_urls = false

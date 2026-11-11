@@ -93,5 +93,6 @@ uv sync --python 3.12
 uv run python scripts/build_docs.py
 ```
 
-The result is `.cache/reccy-docs/site/index.html`. See `doc/index.md` for the
-documentation guide. Runtime-only installations can use `uv sync --no-dev`.
+The result is `.cache/reccy-docs/site/index.html`. See `doc/index.md` for usage
+and `doc/contributing.md` for the documentation build guide. Runtime-only
+installations can use `uv sync --no-dev`.

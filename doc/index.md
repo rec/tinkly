@@ -1,55 +1,76 @@
-# tinkly
+# Control Twinkly lights with Python
 
-Tinkly provides discovery, authentication, HTTP endpoint access, and realtime
-UDP frame transmission for Twinkly lights. It requires Python 3.12 or newer
-and uses only the standard library at runtime.
+Tinkly lets Python programs find Twinkly controllers on the local network,
+read their settings, change their output, and send RGB animation frames.
+Each client connects to one controller. Python 3.12 or newer is required;
+the installed library has no third-party runtime dependencies.
 
-## Endpoint properties
+## Install
 
-Read an endpoint property to make an HTTP GET request. Each read returns a fresh
-`TwinklyResponse` containing the HTTP status and decoded JSON data:
-
-```python
-response = client.firmware_version
-brightness = client.brightness.data
-```
-
-Firmware version and status do not require authentication. Other properties
-authenticate automatically when necessary.
-
-Writable properties accept the device's JSON body:
-
-```python
-client.brightness = {'mode': 'enabled', 'type': 'A', 'value': 75}
-```
-
-Assignment makes an HTTP POST and propagates errors. It does not return a
-response; use `client.post()` when the response is needed. The generated API
-reference identifies readable and writable properties and their endpoint paths.
-
-Authentication, echo, layout deletion, network scanning, and realtime/off mode
-switching remain methods. Generic HTTP methods provide direct endpoint access.
-
-## Discovery and frames
-
-`discover()` waits up to two seconds for the first device, then collects responses
-for another 100 ms. Its timeout and grouping window can be configured.
-
-`send_frame()` sends a packed RGB frame through the generation 2 realtime UDP
-protocol. The caller controls repeated transmission, pacing, authentication
-renewal, retries, reconnection, and shutdown. Frames support contiguous unsigned
-byte buffers, including NumPy arrays, without requiring NumPy as a dependency.
-
-## Building this documentation
-
-The documentation tools are development dependencies and require Python 3.12 or
-newer. From the repository root:
+From a checkout of this repository, create an environment and install the library:
 
 ```sh
-uv sync --python 3.12
-uv run python scripts/build_docs.py
+uv venv --python 3.12
+uv pip install .
 ```
 
-Open `.cache/reccy-docs/site/index.html` to view the result. Griffe analyzes the
-Python source without importing tinkly or contacting devices. The project-specific
-extension in `scripts/griffe_tinkly.py` recognizes the endpoint property factories.
+## Find a device and change its brightness
+
+Connect your computer and lights to the same local network, then run:
+
+```python
+from tinkly.client import TwinklyClient
+from tinkly.discovery import discover
+
+devices = list(discover())
+if not devices:
+    raise SystemExit('No Twinkly devices found on the local network')
+
+for device in devices:
+    print(device.device_id, device.ip_address)
+
+client = TwinklyClient(host=devices[0].ip_address)
+print('Firmware:', client.firmware_version.data)
+print('Brightness:', client.brightness.data)
+
+client.brightness = {'mode': 'enabled', 'type': 'A', 'value': 75}
+print('Updated brightness:', client.brightness.data)
+```
+
+This example chooses the first controller found. If you already know its address,
+create the client directly with `TwinklyClient(host='192.168.1.23')`.
+
+## Reading and writing settings
+
+Reading a property sends a fresh request to the device. The result has two fields:
+`data` contains the decoded JSON object, and `http_status` contains the HTTP status.
+Writing a property sends the assigned dictionary to the device. Assignment does
+not return a response; use `client.post()` if you need to inspect that response.
+
+Firmware version and status can be read without authentication. Protected
+requests obtain an authentication token automatically. Request failures raise
+exceptions for your program to handle.
+
+Authentication, echo, deleting a layout, starting a network scan, and switching
+to realtime or off mode are methods because they perform actions.
+
+## API reference
+
+Choose the part of the library you need:
+
+| Reference | What it covers |
+| --- | --- |
+| [HTTP client and settings](reference/tinkly/client.md) | Create a client, read and write properties, authenticate, and call endpoints directly. |
+| [Device discovery](reference/tinkly/discovery.md) | Find controllers and read their addresses and identifiers. |
+| [RGB frame transmission](reference/tinkly/frame.md) | Send packed RGB frames to a controller in realtime mode. |
+| [Errors](reference/tinkly/errors.md) | Handle authentication, endpoint, discovery, and protocol failures. |
+| [Authentication helpers](reference/tinkly/authentication.md) | Low-level MAC address and challenge-response functions. |
+
+For multiple controllers, create one client per controller and send each its own
+frame. Tinkly provides the transport; your application manages animation timing,
+retries, reconnection, and coordination between controllers.
+
+## Contributing
+
+See [Building and checking the documentation](contributing.md) for the dev setup,
+local build command, and generated-property documentation extension.

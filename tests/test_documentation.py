@@ -18,6 +18,7 @@ class DocumentationTests(unittest.TestCase):
             allow_inspection=False,
         )
         client = module['TwinklyClient']
+        self.assertIn('HTTP client and settings', module.parent.docstring.value)
         brightness = client['brightness']
         firmware = client['firmware_version']
         status = client['status']
