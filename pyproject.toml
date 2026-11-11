@@ -6,7 +6,21 @@ build-backend = "setuptools.build_meta"
 name = "tinkly"
 version = "0.2.0"
 description = "Low-level Twinkly discovery, authentication, HTTP, and realtime UDP transport"
+readme = "README.md"
+authors = [{ name = "Tom Ritchford", email = "tom@swirly.com" }]
 requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+]
+
+[project.urls]
+Documentation = "https://rec.github.io/tinkly/"
+Repository = "https://github.com/rec/tinkly"
+Issues = "https://github.com/rec/tinkly/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -15,8 +29,12 @@ include = ["tinkly*"]
 [tool.ruff.format]
 quote-style = "single"
 
+[tool.ruff.lint]
+select = ["B", "E", "F", "I"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
+testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
@@ -28,6 +46,9 @@ dev = [
     "ty>=0.0.97",
     "tyro",
 ]
+
+[tool.uv]
+exclude-newer = "1 week"
 
 [tool.uv.sources]
 reccy = { git = "ssh://git@github.com/rec/reccy.git", branch = "main" }
