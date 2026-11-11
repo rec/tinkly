@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from tinkly.client import TWINKLY_API_PREFIX, TwinklyClient, TwinklyResponse
+from tinkly.client import TWINKLY_API_PREFIX, AuthToken, TwinklyClient, TwinklyResponse
 from tinkly.errors import UnsupportedEndpointError
 
 
@@ -52,14 +52,17 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(client.host, '192.168.1.23')
         self.assertEqual(client.timeout, 1.5)
 
-    def test_delete_uses_delete_request(self) -> None:
+    def test_delete_sends_authenticated_delete_request(self) -> None:
         FakeHttpConnection.response = FakeHttpResponse(200, b'{"code":1000}')
         FakeHttpConnection.requests = []
 
         with patch('tinkly.client.client.HTTPConnection', FakeHttpConnection):
-            response = TwinklyClient(host='192.168.1.23').delete(
-                'movies', authenticated=False
-            )
+            response = TwinklyClient(
+                host='192.168.1.23',
+                token=AuthToken(
+                    value='test-token', challenge_response='', expires_at=None
+                ),
+            ).delete('movies')
 
         self.assertEqual(response.data, {'code': 1000})
         self.assertEqual(
@@ -72,7 +75,10 @@ class ClientTests(unittest.TestCase):
                     'DELETE',
                     f'{TWINKLY_API_PREFIX}/movies',
                     None,
-                    {'Content-Type': 'application/json'},
+                    {
+                        'Content-Type': 'application/json',
+                        'X-Auth-Token': 'test-token',
+                    },
                 )
             ],
         )
@@ -133,7 +139,7 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(raised.exception.path, 'missing')
         self.assertEqual(raised.exception.text, '{"code":1101}')
 
-    def test_firmware_version_and_status_default_to_unauthenticated_gets(self) -> None:
+    def test_firmware_version_and_status_use_unauthenticated_gets(self) -> None:
         calls = []
 
         def get(

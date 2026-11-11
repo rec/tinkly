@@ -106,14 +106,14 @@ class TwinklyClient:
             authenticated=authenticated,
         )
 
-    def delete(self, path: str, authenticated: bool = True) -> TwinklyResponse:
-        return self.request('DELETE', path, authenticated=authenticated)
+    def delete(self, path: str) -> TwinklyResponse:
+        return self.request('DELETE', path)
 
-    def get_firmware_version(self, authenticated: bool = False) -> TwinklyResponse:
-        return self.get('fw/version', authenticated=authenticated)
+    def get_firmware_version(self) -> TwinklyResponse:
+        return self.get('fw/version', authenticated=False)
 
-    def get_status(self, authenticated: bool = False) -> TwinklyResponse:
-        return self.get('status', authenticated=authenticated)
+    def get_status(self) -> TwinklyResponse:
+        return self.get('status', authenticated=False)
 
     def get_device_name(self) -> TwinklyResponse:
         return self.get('device_name')
