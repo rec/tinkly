@@ -22,7 +22,7 @@ retain the `Twinkly` spelling.
 ```python
 from tinkly.client import TwinklyClient
 from tinkly.discovery import discover
-from tinkly.frame import send_frame_v3
+from tinkly.frame import send_frame
 
 devices = list(discover(timeout=2.0))
 client = TwinklyClient(host=devices[0].ip_address)
@@ -32,13 +32,13 @@ token = client.authenticate()
 
 client.set_realtime_mode()
 frame = bytes((255, 0, 0)) * int(str(info['number_of_led']))
-send_frame_v3(client.host, token.value, frame)
+send_frame(client.host, token.value, frame)
 client.set_off_mode()
 ```
 
 This illustrates one frame transmission. The caller controls repeated frame
 delivery, pacing, token renewal, retries, reconnection, and shutdown. For repeated
-transmissions, `send_frame_v3` accepts a caller-owned UDP socket as `output`.
+transmissions, `send_frame` accepts a caller-owned UDP socket as `output`.
 UDP sending uses `socket.sendto` on macOS, Linux, and Windows.
 
 `TwinklyClient` exposes typed response records containing the HTTP status and

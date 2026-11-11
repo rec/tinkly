@@ -1,4 +1,4 @@
-"""Generation 2 realtime UDP frame sender."""
+"""Generation 2 realtime UDP frame sender using protocol version 3."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ REALTIME_PORT = 7777
 MAX_FRAGMENT_SIZE = 900
 
 
-def frame_packets_v3(
+def frame_packets(
     token: str,
     frame: Buffer,
 ) -> Iterable[tuple[bytes, memoryview]]:
@@ -33,19 +33,19 @@ def frame_packets_v3(
         yield b'\x03' + raw_token + b'\x00\x00' + bytes((index,)), fragment
 
 
-def send_frame_v3(
+def send_frame(
     host: str, token: str, frame: Buffer, output: socket.socket | None = None
 ) -> int:
     if output is not None:
-        return _send_frame_v3(output, host, token, frame)
+        return _send_frame(output, host, token, frame)
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP) as sock:
-        return _send_frame_v3(sock, host, token, frame)
+        return _send_frame(sock, host, token, frame)
 
 
-def _send_frame_v3(output: socket.socket, host: str, token: str, frame: Buffer) -> int:
+def _send_frame(output: socket.socket, host: str, token: str, frame: Buffer) -> int:
     sent = 0
     address = (host, REALTIME_PORT)
-    for header, payload in frame_packets_v3(token, frame):
+    for header, payload in frame_packets(token, frame):
         sent += output.sendto(b''.join((header, payload)), address)
     return sent
 

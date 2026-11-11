@@ -5,14 +5,14 @@ from array import array
 from unittest.mock import patch
 
 from tinkly.errors import ProtocolError
-from tinkly.frame import frame_packets_v3, frame_payload, send_frame_v3
+from tinkly.frame import frame_packets, frame_payload, send_frame
 
 
 class RealtimeFrameTests(unittest.TestCase):
     def test_generation_2_v3_packet(self) -> None:
         frame = bytes((230, 85, 0)) * 250
 
-        packets = list(frame_packets_v3('MCIGBF1qJlg=', frame))
+        packets = list(frame_packets('MCIGBF1qJlg=', frame))
 
         self.assertEqual(len(packets), 1)
         header, payload = packets[0]
@@ -26,7 +26,7 @@ class RealtimeFrameTests(unittest.TestCase):
     def test_generation_2_v3_fragments_large_frames(self) -> None:
         frame = b'a' * 903
 
-        packets = list(frame_packets_v3('MCIGBF1qJlg=', frame))
+        packets = list(frame_packets('MCIGBF1qJlg=', frame))
 
         self.assertEqual(len(packets), 2)
         self.assertEqual(packets[0][0], b'\x030"\x06\x04]j&X\x00\x00\x00')
@@ -73,7 +73,7 @@ class RealtimeFrameTests(unittest.TestCase):
                 return len(data)
 
         with patch('tinkly.frame.socket.socket', return_value=Socket()):
-            sent = send_frame_v3('192.168.1.23', 'MCIGBF1qJlg=', frame)
+            sent = send_frame('192.168.1.23', 'MCIGBF1qJlg=', frame)
 
         self.assertEqual(sent, 15)
         self.assertEqual(len(datagrams), 1)
@@ -92,7 +92,7 @@ class RealtimeFrameTests(unittest.TestCase):
 
         output = Socket()
         with patch('tinkly.frame.socket.socket') as create_socket:
-            sent = send_frame_v3('192.168.1.23', 'MCIGBF1qJlg=', frame, output)
+            sent = send_frame('192.168.1.23', 'MCIGBF1qJlg=', frame, output)
 
         self.assertEqual(sent, 927)
         create_socket.assert_not_called()
@@ -105,4 +105,4 @@ class RealtimeFrameTests(unittest.TestCase):
 
     def test_rejects_bad_realtime_token(self) -> None:
         with self.assertRaises(ProtocolError):
-            list(frame_packets_v3('bad', b'\x00\x00\x00'))
+            list(frame_packets('bad', b'\x00\x00\x00'))
