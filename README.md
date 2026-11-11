@@ -11,6 +11,9 @@ I re-implemented just the Twinkly communication part, and left all the other
 parts behind. In particular, there is no CLI - for that, you'll have to see my
 upcoming general project, "lyte".
 
+Check out https://xled-docs.readthedocs.io/en/latest/ for more information about the
+API protocol.
+
 ## Device communication
 
 This package provides UDP discovery, authentication, HTTP endpoint access for generation
